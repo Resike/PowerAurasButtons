@@ -1,16 +1,19 @@
-## Interface: 40200
+## Interface: 60000
 ## Author: Daniel Yates
-## Version: 4.2.0a
+## Version: 6.0.0
 ## Title: Power Auras Classic: Buttons
 ## Notes: Allows you to use various displays on action buttons when a Power Auras aura is activated.
 ## Dependencies: PowerAuras
-## OptionalDeps: LibActionButton-1.0, LibSharedMedia-3.0, SharedMedia, LibStub, Bartender4, Dominos, RazerNaga
+## OptionalDeps: LibActionButton-1.0, LibSharedMedia-3.0, SharedMedia, LibStub, Bartender4, CT_BarMod, Dominos, RazerNaga
 ## SavedVariables: PowerAurasButtons_AurasDB, PowerAurasButtons_SettingsDB
 ## SavedVariablesPerCharacter: PowerAurasButtons_CharacterAurasDB
 
+UIDropDownMenuTemplates.xml
+UIDropDownMenu.lua
+
 # Core addon. This will set up the global frame and event handlers - actual module init isn't done
 # until later.
-Core.lua
+PowerAurasButtons.lua
 
 # Modules. You could add these in whatever order you feel like, due to dependency management.
 Modules\Config.lua

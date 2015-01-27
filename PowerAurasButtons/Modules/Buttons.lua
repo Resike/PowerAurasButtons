@@ -4,9 +4,9 @@
 	Module: Buttons
 --]]
 -- Create module frames.
-local CoreFrame        = PowerAurasButtons;
-local ModuleFrame      = CoreFrame:RegisterModule("Buttons", { "Auras" });
-local Modules          = CoreFrame.Modules;
+local CoreFrame        = PowerAurasButtons
+local ModuleFrame      = CoreFrame:RegisterModule("Buttons", { "Auras" })
+local Modules          = CoreFrame.Modules
 --[[
 ----------------------------------------------------------------------------------------------------
 Variables
@@ -19,26 +19,26 @@ Variables
 	ThrottleTimer      Stores the current throttle timer for mass updates.
 ----------------------------------------------------------------------------------------------------
 --]]
-local Buttons          = {};
-local ButtonsBySlot    = {};
-local ButtonData       = {};
-local ButtonQueue      = {};
-local ButtonsQueued    = false;
-local ButtonQueueAll   = false;
-local ThrottleTimer    = 0;
+local Buttons          = {}
+local ButtonsBySlot    = {}
+local ButtonData       = {}
+local ButtonQueue      = {}
+local ButtonsQueued    = false
+local ButtonQueueAll   = false
+local ThrottleTimer    = 0
 -- Upvalues.
 local unpack, setmetatable, ActionButton_ShowOverlayGlow, ActionButton_HideOverlayGlow, wipe, type, GetActionInfo, 
 	GetMacroSpell, GetMacroItem, pairs, IsSpellOVerlayed, hooksecurefunc = unpack, setmetatable, 
 	ActionButton_ShowOverlayGlow, ActionButton_HideOverlayGlow, wipe, type, GetActionInfo, GetMacroSpell, GetMacroItem, 
-	pairs, IsSpellOVerlayed, hooksecurefunc;
+	pairs, IsSpellOVerlayed, hooksecurefunc
 -- Caches.
-local spellcache = setmetatable({}, {__index=function(t,v) local a = {GetSpellInfo(v)} if GetSpellInfo(v) then t[v] = a end return a end});
+local spellcache = setmetatable({}, {__index=function(t,v) local a = {GetSpellInfo(v)} if GetSpellInfo(v) then t[v] = a end return a end})
 local function GetSpellInfo(a)
-    return unpack(spellcache[a]);
+    return unpack(spellcache[a])
 end
-local itemcache = setmetatable({}, {__index=function(t,v) local a = {GetItemInfo(v)} if GetItemInfo(v) then t[v] = a end return a end});
+local itemcache = setmetatable({}, {__index=function(t,v) local a = {GetItemInfo(v)} if GetItemInfo(v) then t[v] = a end return a end})
 local function GetItemInfo(a)
-    return unpack(spellcache[a]);
+    return unpack(spellcache[a])
 end
 --[[
 ----------------------------------------------------------------------------------------------------
@@ -48,7 +48,7 @@ Returns all the buttons!
 ----------------------------------------------------------------------------------------------------
 --]]
 function ModuleFrame:GetButtons()
-	return Buttons;
+	return Buttons
 end
 --[[
 ----------------------------------------------------------------------------------------------------
@@ -59,18 +59,18 @@ Event handler for button updates. Updates glows depending on assigned auras, etc
 --]]
 function ModuleFrame:OnButtonUpdate(button)
 	-- Only bother updating if we can see it.
-	if(not button or not button:IsShown()) then return; end
+	if(not button or not button:IsShown()) then return end
 	-- Test the button for glowability.
-	ModuleFrame:ProcessButtonActions(button);
+	ModuleFrame:ProcessButtonActions(button)
 	-- Fire button update event.
-	CoreFrame:FireModuleEvent("OnButtonUpdate", button:GetName());
+	CoreFrame:FireModuleEvent("OnButtonUpdate", button:GetName())
 	-- So, does the glow need showing or hiding?
 	if(ModuleFrame:GetButtonData(button:GetName())["glow"]) then
 		-- Show the glow.
-		ActionButton_ShowOverlayGlow(button);
+		ActionButton_ShowOverlayGlow(button)
 	else
 		-- Hide the glow.
-		ActionButton_HideOverlayGlow(button);
+		ActionButton_HideOverlayGlow(button)
 	end
 end
 --[[
@@ -82,7 +82,7 @@ Retrieves the button data table for the given button ID. Returns nil on failure.
 --]]
 function ModuleFrame:GetButtonData(buttonID)
 	-- Go.
-	return ButtonData[buttonID] or nil;
+	return ButtonData[buttonID] or nil
 end
 --[[
 ----------------------------------------------------------------------------------------------------
@@ -94,33 +94,33 @@ be glowing, showing displays, etc.
 --]]
 function ModuleFrame:ProcessButtonActions(button)
 	-- Few locals.
-	local buttonID = button:GetName();
+	local buttonID = button:GetName()
 	-- Get the button data table if it exists. Otherwise, make a new one. We recycle the old one
 	-- so the memory size won't fluctuate.
-	local buttonData = ButtonData[buttonID] or {};
+	local buttonData = ButtonData[buttonID] or {}
 	-- Wipe the data.
-	wipe(buttonData);
+	wipe(buttonData)
 	-- Fire button processing event.
-	CoreFrame:FireModuleEvent("OnButtonProcess", buttonID);
+	CoreFrame:FireModuleEvent("OnButtonProcess", buttonID)
 	-- Get the non blizzard auras.
-	local CustomAuras, BlizzAuras = Modules.Auras:GetAuras();
+	local CustomAuras, BlizzAuras = Modules.Auras:GetAuras()
 	-- More locals.
-	local buttonAction, buttonActionType, buttonActionID, buttonMacro, displayCount;
+	local buttonAction, buttonActionType, buttonActionID, buttonMacro, displayCount
 	-- Get the button action ID.
-	buttonAction = button._state_action or button.action;
+	buttonAction = button._state_action or button.action
 	-- Action needs to be integer.
 	if(not buttonAction or type(buttonAction) ~= "number") then
 		-- Action isn't valid.
-		ButtonData[buttonID] = buttonData;
-		return;
+		ButtonData[buttonID] = buttonData
+		return
 	end
 	-- Make sure button is cached by slot.
-	ButtonsBySlot[buttonAction] = button;
+	ButtonsBySlot[buttonAction] = button
 	-- Get the button action data.
-	buttonActionType, buttonActionID = GetActionInfo(buttonAction);
+	buttonActionType, buttonActionID = GetActionInfo(buttonAction)
 	-- Get macro names if needed.
 	if(buttonActionType == "macro") then
-		buttonMacro = GetMacroSpell(buttonActionID) or GetMacroItem(buttonActionID);
+		buttonMacro = GetMacroSpell(buttonActionID) or GetMacroItem(buttonActionID)
 	end
 	-- Right, first off we need to go over all the auras see if they're linked to this one.
 	for auraID, _ in pairs(CustomAuras) do
@@ -143,10 +143,10 @@ function ModuleFrame:ProcessButtonActions(button)
 						or auraActionData["type"] == "item" 
 						and GetItemInfo(auraActionData["id"]) == buttonMacro)) then
 							-- Enable glows if the action says so.
-							Modules.Auras:MergeAuraAction(buttonData, auraActionData);
+							Modules.Auras:MergeAuraAction(buttonData, auraActionData)
 							-- Fire the OnAuraDisplay event.
 							CoreFrame:FireModuleEvent("OnButtonDisplayAura", buttonID, auraID, 
-								auraActionData, auraActionID);
+								auraActionData, auraActionID)
 						end
 					end
 				end
@@ -158,10 +158,10 @@ function ModuleFrame:ProcessButtonActions(button)
 		if(not buttonData["glow"] and buttonActionType == "spell" 
 		and IsSpellOverlayed(buttonActionID)) then
 			-- It needs to glow.
-			buttonData["glow"] = true;
+			buttonData["glow"] = true
 		elseif(not buttonData["glow"] and buttonActionType == "macro") then
 			-- Macros should glow too.
-			buttonMacro = GetMacroSpell(buttonActionID) or GetMacroItem(buttonActionID);
+			buttonMacro = GetMacroSpell(buttonActionID) or GetMacroItem(buttonActionID)
 			-- Loop over active Blizzard auras.
 			for blizzAuraID, _ in pairs(BlizzAuras) do
 				-- Check ID.
@@ -169,14 +169,14 @@ function ModuleFrame:ProcessButtonActions(button)
 				and (buttonMacro == GetSpellInfo(blizzAuraID)
 				or GetItemInfo(blizzAuraID) == buttonMacro)) then
 					-- Yeah, it's a match. Timers/Stacks aren't on for blizz ones.
-					buttonData["glow"] = true;
-					break; -- Break early, it doesn't matter if any others are glowing or not.
+					buttonData["glow"] = true
+					break -- Break early, it doesn't matter if any others are glowing or not.
 				end
 			end
 		end
 	end
 	-- Update.
-	ButtonData[buttonID] = buttonData;
+	ButtonData[buttonID] = buttonData
 end
 --[[
 ----------------------------------------------------------------------------------------------------
@@ -187,8 +187,8 @@ Fired when OnAuraShow/OnAuraHide are called. Performs a mass button update.
 --]]
 function ModuleFrame:UpdateAllButtons()
 	-- Queue all buttons for an update.
-	ButtonQueueAll = true;
-	ButtonsQueued = true;
+	ButtonQueueAll = true
+	ButtonsQueued = true
 end
 --[[
 ----------------------------------------------------------------------------------------------------
@@ -200,10 +200,10 @@ Registers a single button for an update.
 function ModuleFrame:UpdateButton(button)
 	-- Register button for update.
 	if(not ButtonQueueAll and Buttons[button:GetName()]) then
-		ButtonQueue[button:GetName()] = button;
+		ButtonQueue[button:GetName()] = button
 	end
 	-- Flag queue.
-	ButtonsQueued = true;
+	ButtonsQueued = true
 end
 --[[
 ----------------------------------------------------------------------------------------------------
@@ -214,43 +214,43 @@ while we're throttling - we unregister it after.
 ----------------------------------------------------------------------------------------------------
 --]]
 do
-local throttle = 0;
+local throttle = 0
 
 function ModuleFrame:OnUpdate(elapsed)
-	throttle = throttle+elapsed;
+	throttle = throttle+elapsed
 	if(throttle >= 1) then
 		
-		throttle = throttle-1;
+		throttle = throttle-1
 	end
 	-- Update time elapsed.
-	ThrottleTimer = ThrottleTimer + (ButtonsQueued and elapsed or 0);
+	ThrottleTimer = ThrottleTimer + (ButtonsQueued and elapsed or 0)
 	-- Time up?
-	if(ThrottleTimer < CoreFrame:GetModuleSetting("Buttons", "Throttle")) then return; end
+	if(ThrottleTimer < CoreFrame:GetModuleSetting("Buttons", "Throttle")) then return end
 	-- Process queue.
 	for buttonID, state in pairs((ButtonQueueAll and Buttons or ButtonQueue)) do
 		-- Increment counter.
 		if(state) then
 			-- Remove from queue...
-			ButtonQueue[buttonID] = false;
+			ButtonQueue[buttonID] = false
 			-- This one is weird, since the ButtonQueue stores a state boolean but ButtonQueueAll iterates over the 
 			-- Buttons table directly.
-			local button = (ButtonQueueAll and state or Buttons[buttonID]);
+			local button = (ButtonQueueAll and state or Buttons[buttonID])
 			-- If button is true, resolve it to an actual button.
 			if(button == true) then
-				Buttons[buttonID] = _G[buttonID] or true;
-				button = Buttons[buttonID];
+				Buttons[buttonID] = _G[buttonID] or true
+				button = Buttons[buttonID]
 			end
 			-- Does button exist now?
 			if(button and button ~= true) then
-				ModuleFrame:OnButtonUpdate(button);
+				ModuleFrame:OnButtonUpdate(button)
 			end
 		end
 	end
 	-- Clear booleans.
-	ButtonsQueued = false;
-	ButtonQueueAll = false;
+	ButtonsQueued = false
+	ButtonQueueAll = false
 	-- Reset throttle.
-	ThrottleTimer = ThrottleTimer - CoreFrame:GetModuleSetting("Buttons", "Throttle");
+	ThrottleTimer = ThrottleTimer - CoreFrame:GetModuleSetting("Buttons", "Throttle")
 end
 
 end
@@ -263,11 +263,11 @@ Registers buttons into our button array for glow activation purposes.
 --]]
 function ModuleFrame:RegisterButtons(key, count)
 	-- Register, nils included (it's a Dominos thing)
-	local button = nil;
+	local button = nil
 	for i=1,(count or 12) do
 		-- Register it.
 		if(not CoreFrame:GetModuleSetting("Buttons", "IgnoredButtons")[key .. i]) then
-			Buttons[key .. i] = _G[key .. i] or true;
+			Buttons[key .. i] = _G[key .. i] or true
 		end
 	end
 end
@@ -280,11 +280,11 @@ Fired when an action is created. Used to set defaults in the newly made action I
 --]]
 function ModuleFrame:OnActionCreate(auraID, actionID)
 	-- Get action.
-	local actionData = Modules.Auras:GetAuraAction(auraID, actionID);
+	local actionData = Modules.Auras:GetAuraAction(auraID, actionID)
 	-- Write.
-	actionData["glow"] = true;
+	actionData["glow"] = true
 	-- Save.
-	Modules.Auras:SetAuraAction(auraID, actionID, actionData);
+	Modules.Auras:SetAuraAction(auraID, actionID, actionData)
 end
 --[[
 ----------------------------------------------------------------------------------------------------
@@ -294,7 +294,7 @@ Checks to see if the module is enabled.
 ----------------------------------------------------------------------------------------------------
 --]]
 function ModuleFrame:IsEnabled()
-	return true;
+	return true
 end
 --[[
 ----------------------------------------------------------------------------------------------------
@@ -312,11 +312,11 @@ function ModuleFrame:FixSettings(force)
 			["RegisterBlizzardButtons"] = true,
 			["ShowBlizzardGlows"] = true,
 			["IgnoredButtons"] = {},
-		};
+		}
 	end
 	-- Compatibility.
 	if(PowerAurasButtons_SettingsDB["Buttons"]["IgnoredButtons"] == nil) then
-		PowerAurasButtons_SettingsDB["Buttons"]["IgnoredButtons"] = {};
+		PowerAurasButtons_SettingsDB["Buttons"]["IgnoredButtons"] = {}
 	end
 end
 --[[
@@ -328,82 +328,85 @@ Fired by the module handler. Put all the loading code into here.
 --]]
 function ModuleFrame:OnInitialize()
 	-- Fix settings first.
-	ModuleFrame:FixSettings();
+	ModuleFrame:FixSettings()
 	-- Register the needed buttons.
 	if(Dominos) then
 		-- Dominos reuses the Blizzard AB's and creates 60 of its own.
-		CoreFrame:Debug("Dominos detected");
-		ModuleFrame:RegisterButtons("DominosActionButton", 60);
+		CoreFrame:Debug("Dominos detected")
+		ModuleFrame:RegisterButtons("DominosActionButton", 60)
+	elseif(CT_BarMod) then
+		-- Register additional buttons. Dominos style.
+		ModuleFrame:RegisterButtons("CT_BarModActionButton", 120)
 	elseif(RazerNaga) then
 		-- Register additional buttons. Dominos style.
-		ModuleFrame:RegisterButtons("RazerNagaActionButton", 60);
+		ModuleFrame:RegisterButtons("RazerNagaActionButton", 60)
 	elseif(LibStub) then
 		-- Bartender4 is a tad more tricky. It uses LAB which makes buttons as needed.
 		-- So we need to check for LAB (and LibStub), then scan all loaded buttons and make
 		-- sure future ones are added.
-		local LAB = LibStub("LibActionButton-1.0", true);
+		local LAB = LibStub("LibActionButton-1.0", true)
 		if(LAB) then
-			CoreFrame:Debug("Bartender4/LibActionButton detected");
+			CoreFrame:Debug("Bartender4/LibActionButton detected")
 			-- LibActionButton found. Go over all of the buttons.
 			for button in pairs(LAB:GetAllButtons()) do
-				Buttons[button:GetName()] = button;
+				Buttons[button:GetName()] = button
 				-- Store by slot too.
 				if(button._state_action) then
-					ButtonsBySlot[button._state_action] = button;
+					ButtonsBySlot[button._state_action] = button
 				end
 			end
 			-- In addition, make sure this applies to future buttons.
 			LAB:RegisterCallback("OnButtonCreated", function(_, button)
-				Buttons[button:GetName()] = button;
+				Buttons[button:GetName()] = button
 				-- Store by slot too.
 				if(button._state_action) then
-					ButtonsBySlot[button._state_action] = button;
+					ButtonsBySlot[button._state_action] = button
 				end
-			end);
+			end)
 --			-- Add a button update hook.
 --			LAB:RegisterCallback("OnButtonUpdate", function(_, button)
---				if(not button:IsShown()) then return; end
---				ModuleFrame:UpdateButton(button);
---			end);
+--				if(not button:IsShown()) then return end
+--				ModuleFrame:UpdateButton(button)
+--			end)
 		end
 	end
 	-- Odds are you're using the default buttons if you're not using Dominos/BT.
 	-- Register them if not told otherwise.
 	if(CoreFrame:GetModuleSetting("Buttons", "RegisterBlizzardButtons") or Dominos or RazerNaga) then
-		CoreFrame:Debug("Registering Blizzard buttons");
-		ModuleFrame:RegisterButtons("ActionButton");
-		ModuleFrame:RegisterButtons("BonusActionButton");
-		ModuleFrame:RegisterButtons("MultiBarRightButton");
-		ModuleFrame:RegisterButtons("MultiBarLeftButton");
-		ModuleFrame:RegisterButtons("MultiBarBottomRightButton");
-		ModuleFrame:RegisterButtons("MultiBarBottomLeftButton");
+		CoreFrame:Debug("Registering Blizzard buttons")
+		ModuleFrame:RegisterButtons("ActionButton")
+		ModuleFrame:RegisterButtons("BonusActionButton")
+		ModuleFrame:RegisterButtons("MultiBarRightButton")
+		ModuleFrame:RegisterButtons("MultiBarLeftButton")
+		ModuleFrame:RegisterButtons("MultiBarBottomRightButton")
+		ModuleFrame:RegisterButtons("MultiBarBottomLeftButton")
 	end
 --	-- If you use Dominos or have the Blizzard buttons on, you need this.
 --	if(Dominos or RazerNaga or CoreFrame:GetModuleSetting("Buttons", "RegisterBlizzardButtons")) then
 --		-- Hook for button updates.
 --		hooksecurefunc("ActionButton_Update", function(button)
---			if(not button:IsShown()) then return; end
---			ModuleFrame:UpdateButton(button);
---		end);
+--			if(not button:IsShown()) then return end
+--			ModuleFrame:UpdateButton(button)
+--		end)
 --	end
 	-- Update only if slot data changes.
 	CoreFrame:RegisterBlizzEventListener("ACTIONBAR_SLOT_CHANGED", ModuleFrame, function(self, id)
 		if(id == 0 or not ButtonsBySlot[id]) then
-			ModuleFrame:UpdateAllButtons();
+			ModuleFrame:UpdateAllButtons()
 		else
-			ModuleFrame:UpdateButton(ButtonsBySlot[id]);
+			ModuleFrame:UpdateButton(ButtonsBySlot[id])
 		end
-	end);
+	end)
 	-- Create some events for modules to hook on to.
-	CoreFrame:RegisterModuleEvent("OnButtonUpdate");
-	CoreFrame:RegisterModuleEvent("OnButtonProcess");
-	CoreFrame:RegisterModuleEvent("OnButtonDisplayAura");
+	CoreFrame:RegisterModuleEvent("OnButtonUpdate")
+	CoreFrame:RegisterModuleEvent("OnButtonProcess")
+	CoreFrame:RegisterModuleEvent("OnButtonDisplayAura")
 	-- Register OnAuraShow/OnAuraHide.
-	CoreFrame:RegisterModuleEventListener("OnAuraShow", ModuleFrame, ModuleFrame.UpdateAllButtons);
-	CoreFrame:RegisterModuleEventListener("OnAuraHide", ModuleFrame, ModuleFrame.UpdateAllButtons);
-	CoreFrame:RegisterModuleEventListener("OnActionCreate", ModuleFrame);
+	CoreFrame:RegisterModuleEventListener("OnAuraShow", ModuleFrame, ModuleFrame.UpdateAllButtons)
+	CoreFrame:RegisterModuleEventListener("OnAuraHide", ModuleFrame, ModuleFrame.UpdateAllButtons)
+	CoreFrame:RegisterModuleEventListener("OnActionCreate", ModuleFrame)
 	-- Updates are throttled and processed in an update loop.
-	ModuleFrame:SetScript("OnUpdate", ModuleFrame.OnUpdate);
+	ModuleFrame:SetScript("OnUpdate", ModuleFrame.OnUpdate)
 	-- Done.
-	return true;
+	return true
 end

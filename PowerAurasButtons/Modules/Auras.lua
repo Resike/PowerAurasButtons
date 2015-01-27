@@ -4,9 +4,9 @@
 	Module: Auras
 --]]
 -- Create module frames.
-local CoreFrame        = PowerAurasButtons;
-local ModuleFrame      = CoreFrame:RegisterModule("Auras");
-local Modules          = CoreFrame.Modules;
+local CoreFrame        = PowerAurasButtons
+local ModuleFrame      = CoreFrame:RegisterModule("Auras")
+local Modules          = CoreFrame.Modules
 --[[
 ----------------------------------------------------------------------------------------------------
 Variables
@@ -14,8 +14,8 @@ Variables
 	BlizzAuras         Stores a list of active spell overlays fired by Blizzard's spell events.
 ----------------------------------------------------------------------------------------------------
 --]]
-local ActiveAuras      = {};
-local BlizzAuras       = {};
+local ActiveAuras      = {}
+local BlizzAuras       = {}
 --[[
 ----------------------------------------------------------------------------------------------------
 OnAuraShow
@@ -25,18 +25,18 @@ Triggered when an aura shows. Adds the aura to the active list and triggers a bu
 --]]
 function ModuleFrame:OnAuraShow(auraID)
 	-- Only continue if we have an aura ID.
-	if(not auraID or (PowaAuras.Auras[auraID] and PowaAuras.Auras[auraID].off)) then return; end
+	if(not auraID or (PowaAurasOptions.Auras[auraID] and PowaAurasOptions.Auras[auraID].off)) then return end
 	-- In addition, if this aura is already active then don't reshow it.
-	if(ModuleFrame:IsAuraShown(auraID)) then return; end
+	if(ModuleFrame:IsAuraShown(auraID)) then return end
 	-- It needs actions to be shown.
-	local actions = ModuleFrame:GetAuraActions(auraID);
+	local actions = ModuleFrame:GetAuraActions(auraID)
 	if(not actions or #(actions) == 0) then
-		return;
+		return
 	end
 	-- Register as active.
-	ActiveAuras[auraID] = true;
+	ActiveAuras[auraID] = true
 	-- Right, fire events.
-	CoreFrame:FireModuleEvent("OnAuraShow", auraID);
+	CoreFrame:FireModuleEvent("OnAuraShow", auraID)
 end
 --[[
 ----------------------------------------------------------------------------------------------------
@@ -48,13 +48,13 @@ The secondary aura argument is ignored.
 --]]
 function ModuleFrame:OnAuraHide(aura)
 	-- Continue if there is a valid aura passed.
-	if(not aura) then return; end
+	if(not aura) then return end
 	-- In addition, if this aura is already NOT active then don't bother updating.
-	if(not ModuleFrame:IsAuraShown(aura.id)) then return; end
+	if(not ModuleFrame:IsAuraShown(aura.id)) then return end
 	-- Register as active.
-	ActiveAuras[aura.id] = nil;
+	ActiveAuras[aura.id] = nil
 	-- Right, fire events.
-	CoreFrame:FireModuleEvent("OnAuraHide", aura.id);
+	CoreFrame:FireModuleEvent("OnAuraHide", aura.id)
 end
 --[[
 ----------------------------------------------------------------------------------------------------
@@ -65,11 +65,11 @@ Triggered when a blizzard aura shows. Adds the aura to the active list and trigg
 --]]
 function ModuleFrame:SPELL_ACTIVATION_OVERLAY_GLOW_SHOW(auraID)
 	-- No need to register twice.
-	if(BlizzAuras[auraID]) then return; end
+	if(BlizzAuras[auraID]) then return end
 	-- Register as active. if the settings tell us to.
-	BlizzAuras[auraID] = true;
+	BlizzAuras[auraID] = true
 	-- Right, fire events.
-	CoreFrame:FireModuleEvent("OnAuraShow", auraID);
+	CoreFrame:FireModuleEvent("OnAuraShow", auraID)
 end
 --[[
 ----------------------------------------------------------------------------------------------------
@@ -80,11 +80,11 @@ Triggered when a blizzard aura hides. Removes the aura from the list and trigger
 --]]
 function ModuleFrame:SPELL_ACTIVATION_OVERLAY_GLOW_HIDE(auraID)
 	-- Only unregister if needed.
-	if(not BlizzAuras[auraID]) then return; end
+	if(not BlizzAuras[auraID]) then return end
 	-- Register as inactive.
-	BlizzAuras[auraID] = nil;
+	BlizzAuras[auraID] = nil
 	-- Right, fire events.
-	CoreFrame:FireModuleEvent("OnAuraHide", auraID);
+	CoreFrame:FireModuleEvent("OnAuraHide", auraID)
 end
 --[[
 ----------------------------------------------------------------------------------------------------
@@ -94,7 +94,7 @@ Returns the listing from the ActionTable table which has the given key, or nil.
 ----------------------------------------------------------------------------------------------------
 --]]
 function ModuleFrame:GetActionTable(key)
-	return (key and ActionTable[key]) or (not key and ActionTable) or nil;
+	return (key and ActionTable[key]) or (not key and ActionTable) or nil
 end
 --[[
 ----------------------------------------------------------------------------------------------------
@@ -104,7 +104,7 @@ Retrieves all of active auras.
 ----------------------------------------------------------------------------------------------------
 --]]
 function ModuleFrame:GetAuras()
-	return ActiveAuras, BlizzAuras;
+	return ActiveAuras, BlizzAuras
 end
 --[[
 ----------------------------------------------------------------------------------------------------
@@ -115,11 +115,11 @@ Resets the active aura table and rescans currently active auras.
 --]]
 function ModuleFrame:ResetAuras()
 	-- Reset.
-	ActiveAuras = {};
+	ActiveAuras = {}
 	-- Scan.
 	for i=1,360 do
-		if(PowaAuras.Auras[i] and PowaAuras.Auras[i].Showing) then
-			 ModuleFrame:OnAuraShow(i);
+		if(PowaAurasOptions.Auras[i] and PowaAurasOptions.Auras[i].Showing) then
+			 ModuleFrame:OnAuraShow(i)
 		end
 	end
 end
@@ -133,9 +133,9 @@ Sees if a given aura ID is registered as being active.
 function ModuleFrame:IsAuraShown(auraID)
 	-- Check it.
 	if(ActiveAuras[auraID]) then
-		return true;
+		return true
 	else
-		return nil;
+		return nil
 	end
 end
 --[[
@@ -149,10 +149,10 @@ function ModuleFrame:GetAuraActions(auraID)
 	-- Get the correct configuration table.
 	if(auraID > 120) then
 		-- Global config.
-		return PowerAurasButtons_AurasDB[auraID-120] or {};
+		return PowerAurasButtons_AurasDB[auraID-120] or {}
 	else
 		-- Per-char config.
-		return PowerAurasButtons_CharacterAurasDB[auraID] or {};
+		return PowerAurasButtons_CharacterAurasDB[auraID] or {}
 	end
 end
 --[[
@@ -166,13 +166,13 @@ function ModuleFrame:SetAuraActions(auraID, actions)
 	-- Get the correct configuration table.
 	if(auraID > 120) then
 		-- Global config.
-		PowerAurasButtons_AurasDB[auraID-120] = actions;
+		PowerAurasButtons_AurasDB[auraID-120] = actions
 	else
 		-- Per-char config.
-		PowerAurasButtons_CharacterAurasDB[auraID] = actions;
+		PowerAurasButtons_CharacterAurasDB[auraID] = actions
 	end
 	-- Done.
-	return true;
+	return true
 end
 --[[
 ----------------------------------------------------------------------------------------------------
@@ -183,7 +183,7 @@ Retrieves a single aura action.
 --]]
 function ModuleFrame:GetAuraAction(auraID, actionID)
 	-- Get the actions table and retrieve the index.
-	return ModuleFrame:GetAuraActions(auraID)[actionID];
+	return ModuleFrame:GetAuraActions(auraID)[actionID]
 end
 --[[
 ----------------------------------------------------------------------------------------------------
@@ -194,11 +194,11 @@ Updates a single aura action.
 --]]
 function ModuleFrame:SetAuraAction(auraID, actionID, actionData)
 	-- Get the actions table.
-	local actions = ModuleFrame:GetAuraActions(auraID);
+	local actions = ModuleFrame:GetAuraActions(auraID)
 	-- Write.
-	actions[actionID] = actionData;
+	actions[actionID] = actionData
 	-- Save.
-	ModuleFrame:SetAuraActions(auraID, actions);
+	ModuleFrame:SetAuraActions(auraID, actions)
 end
 --[[
 ----------------------------------------------------------------------------------------------------
@@ -209,16 +209,16 @@ Merges two action data tables, toggling off switches to on.
 --]]
 function ModuleFrame:MergeAuraAction(actionTable, actionData)
 	-- Go over the data table.
-	if(not actionData) then return actionTable; end
+	if(not actionData) then return actionTable end
 	for key, value in pairs(actionData) do
 		-- If the key is any of ours (type/id), ignore.
 		if(key ~= "type" and key ~= "id") then
 			-- Write.
-			actionTable[key] = actionTable[key] or actionData[key];
+			actionTable[key] = actionTable[key] or actionData[key]
 		end
 	end
 	-- Done.
-	return actionTable;
+	return actionTable
 end
 --[[
 
@@ -230,16 +230,16 @@ Adds a new action to the given aura ID.
 --]]
 function ModuleFrame:CreateAuraAction(auraID)
 	-- Make sure it has actions.
-	local actions = ModuleFrame:GetAuraActions(auraID);
-	if(not actions) then actions = {}; end
+	local actions = ModuleFrame:GetAuraActions(auraID)
+	if(not actions) then actions = {} end
 	-- Add the action.
-	tinsert(actions, { ["type"] = "spell", ["id"] = 0 });
+	tinsert(actions, { ["type"] = "spell", ["id"] = 0 })
 	-- Save.
-	ModuleFrame:SetAuraActions(auraID, actions);
+	ModuleFrame:SetAuraActions(auraID, actions)
 	-- Fire OnActionCreate.
-	CoreFrame:FireModuleEvent("OnActionCreate", auraID, #(actions));
+	CoreFrame:FireModuleEvent("OnActionCreate", auraID, #(actions))
 	-- Return the count of the actions.
-	return #(actions);
+	return #(actions)
 end
 --[[
 ----------------------------------------------------------------------------------------------------
@@ -250,12 +250,12 @@ Removes an action from the given aura ID.
 --]]
 function ModuleFrame:RemoveAuraAction(auraID, actionID)
 	-- Get the actions.
-	local actions = ModuleFrame:GetAuraActions(auraID);
-	if(not actions) then actions = {}; end
+	local actions = ModuleFrame:GetAuraActions(auraID)
+	if(not actions) then actions = {} end
 	-- Remove if possible.
-	tremove(actions, actionID);
+	tremove(actions, actionID)
 	-- Save.
-	ModuleFrame:SetAuraActions(auraID, actions);
+	ModuleFrame:SetAuraActions(auraID, actions)
 end
 --[[
 ----------------------------------------------------------------------------------------------------
@@ -265,7 +265,7 @@ Checks to see if the module is enabled.
 ----------------------------------------------------------------------------------------------------
 --]]
 function ModuleFrame:IsEnabled()
-	return true;
+	return true
 end
 --[[
 ----------------------------------------------------------------------------------------------------
@@ -276,15 +276,15 @@ Fired by the module handler. Put all the loading code into here.
 --]]
 function ModuleFrame:OnInitialize()
 	-- Hook Power Auras' aura hide/display mechanisms. Create events for them.
-	hooksecurefunc(PowaAuras, "DisplayAura", ModuleFrame.OnAuraShow);
-	hooksecurefunc(PowaAuras, "SetAuraHideRequest", ModuleFrame.OnAuraHide);
+	hooksecurefunc(PowaAurasOptions, "DisplayAura", ModuleFrame.OnAuraShow)
+	hooksecurefunc(PowaAurasOptions, "SetAuraHideRequest", ModuleFrame.OnAuraHide)
 	-- Register Blizzard aura events.
-	CoreFrame:RegisterBlizzEventListener("SPELL_ACTIVATION_OVERLAY_GLOW_SHOW", ModuleFrame);
-	CoreFrame:RegisterBlizzEventListener("SPELL_ACTIVATION_OVERLAY_GLOW_HIDE", ModuleFrame);
+	CoreFrame:RegisterBlizzEventListener("SPELL_ACTIVATION_OVERLAY_GLOW_SHOW", ModuleFrame)
+	CoreFrame:RegisterBlizzEventListener("SPELL_ACTIVATION_OVERLAY_GLOW_HIDE", ModuleFrame)
 	-- Make events.
-	CoreFrame:RegisterModuleEvent("OnActionCreate");
-	CoreFrame:RegisterModuleEvent("OnAuraShow");
-	CoreFrame:RegisterModuleEvent("OnAuraHide");
+	CoreFrame:RegisterModuleEvent("OnActionCreate")
+	CoreFrame:RegisterModuleEvent("OnAuraShow")
+	CoreFrame:RegisterModuleEvent("OnAuraHide")
 	-- Done.
-	return true;
+	return true
 end
