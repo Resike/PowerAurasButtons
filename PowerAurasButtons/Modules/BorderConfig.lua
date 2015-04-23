@@ -68,8 +68,7 @@ function ModuleFrame:OnCreateConfigurationFrame(name)
 	end)
 		
 	-- Border priority slider.
-	ActionEditor.Priority = CreateFrame("Slider", "PowerAurasButtons_BorderPrioritySlider", 
-		ActionEditor, "OptionsSliderTemplate")
+	ActionEditor.Priority = CreateFrame("Slider", "PowerAurasButtons_BorderPrioritySlider", ActionEditor, "OptionsSliderTemplate")
 	ActionEditor.Priority:SetPoint("TOPLEFT", ActionEditor, "TOPLEFT", 185, -34)
 	ActionEditor.Priority:SetMinMaxValues(1, 50)
 	ActionEditor.Priority:SetValue(1)

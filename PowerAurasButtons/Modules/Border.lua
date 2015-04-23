@@ -67,8 +67,7 @@ function ModuleFrame:OnButtonDisplayAura(buttonID, auraID, actionData)
 	if(not actionData["border"]) then return end
 	if(not ButtonBorders[buttonID]) then ButtonBorders[buttonID] = {} end
 	-- Calculate.
-	if(not ButtonBorders[buttonID][1] or   
-	(actionData["border_priority"] or 25) > (ButtonBorders[buttonID][1] or 25)) then
+	if(not ButtonBorders[buttonID][1] or (actionData["border_priority"] or 25) > (ButtonBorders[buttonID][1] or 25)) then
 		-- Make sure it's enabled.
 		EnabledButtons[buttonID] = true
 		-- It's a higher priority than the currently recorded one.
@@ -152,6 +151,8 @@ function ModuleFrame:OnInitialize()
 	CoreFrame:RegisterModuleEventListener("OnButtonProcess", ModuleFrame)
 	CoreFrame:RegisterModuleEventListener("OnButtonDisplayAura", ModuleFrame)
 	CoreFrame:RegisterModuleEventListener("OnButtonUpdate", ModuleFrame)
+	CoreFrame:RegisterModuleEventListener("OnAuraShow", ModuleFrame, ModuleFrame.UpdateAllButtons)
+	CoreFrame:RegisterModuleEventListener("OnAuraHide", ModuleFrame, ModuleFrame.UpdateAllButtons)
 	CoreFrame:RegisterModuleEventListener("OnActionCreate", ModuleFrame)
 	-- Done.
 	return true
