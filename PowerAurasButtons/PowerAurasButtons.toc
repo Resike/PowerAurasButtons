@@ -1,6 +1,6 @@
-## Interface: 60100
+## Interface: 60200
 ## Author: Daniel Yates
-## Version: 6.0.1
+## Version: 6.0.2
 ## Title: Power Auras Classic: Buttons
 ## Notes: Allows you to use various displays on action buttons when a Power Auras aura is activated.
 ## Dependencies: PowerAuras
