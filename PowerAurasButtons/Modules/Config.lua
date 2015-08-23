@@ -271,9 +271,104 @@ Creates the action editing frame.
 ----------------------------------------------------------------------------------------------------
 --]]
 function ModuleFrame:CreateActionEditor()
+	local frame = CreateFrame("Frame")
+	frame:RegisterEvent("ADDON_LOADED")
+	frame:SetScript("OnEvent", function(self, event, ...)
+		local addon = ...
+		if addon == "PowerAurasOptions" then
+			-- This function runs when the PA options pane opens.
+			local script = function()
+				-- Update the aura if it's valid and show the config frame if it's not up.
+				if(PowaAurasOptions.Auras[PowaAurasOptions.CurrentAuraId] and PowaBarConfigFrame:IsShown()) then
+					-- Update aura.
+					ModuleFrame:UpdateSelectedAura(PowaAurasOptions.CurrentAuraId)
+				else
+					-- Hide if it's not valid or not open.
+					--ActionEditorBase:Hide()
+				end
+			end
+			-- Add needed hooks.
+			if PowaBarConfigFrame then
+				PowaBarConfigFrame:HookScript("OnShow", script)
+				PowaBarConfigFrame:HookScript("OnHide", script)
+			end
+			if PowaAurasOptions.InitPage then
+				hooksecurefunc(PowaAurasOptions, "InitPage", script)
+			end
+			if PowaAurasOptions.UpdateMainOption then
+				hooksecurefunc(PowaAurasOptions, "UpdateMainOption", script)
+			end
+			-- Also hook copying/moving. We can move aura sets like that.
+			if PowaAurasOptions.DoCopyEffect then
+				hooksecurefunc(PowaAurasOptions, "DoCopyEffect", function(_, idFrom, idTo, isMove)
+					-- Figure out the config tables for each.
+					local oldConfig = PowerAurasButtons_CharacterAurasDB
+					local newConfig = PowerAurasButtons_CharacterAurasDB
+					if(idFrom > 120) then oldConfig = PowerAurasButtons_AurasDB end
+					if(idTo > 120) then newConfig = PowerAurasButtons_AurasDB end
+					-- See if we had any auras in these spots.
+					if(oldConfig[idFrom]) then
+						-- Right, place these at the new location.
+						newConfig[idTo] = ModuleFrame:tcopy(oldConfig[idFrom])
+						-- Was it a move?
+						if(isMove) then
+							-- Remove the old config.
+							wipe(oldConfig[idFrom])
+						end
+					end
+					-- Button update.
+					if(CoreFrame:IsModuleEnabled("Auras")) then Modules.Auras:ResetAuras() end
+				end)
+			end
+			-- And aura deleting (we would hook DeleteAura but it messes up with moving effects).
+			if PowaAurasOptions.OptionDeleteEffect then
+				hooksecurefunc(PowaAurasOptions, "OptionDeleteEffect", function(_, auraID)
+					-- Determine the config table this one belonged to.
+					local config = PowerAurasButtons_CharacterAurasDB
+					if(auraID > 120) then config = PowerAurasButtons_AurasDB end
+					-- Did it exist?
+					if(config[auraID] and not tContains(ReindexedAuras, auraID)) then
+						-- Remove it.
+						wipe(config[auraID])
+					end
+					-- Clear the reindex table.
+					wipe(ReindexedAuras)
+					-- Button update.
+					if(CoreFrame:IsModuleEnabled("Auras")) then Modules.Auras:ResetAuras() end
+				end)
+			end
+			-- If you delete an aura, it'll cause a re-indexing of ones after (delete #1 and #2 moves).
+			if PowaAurasOptions.ReindexAura then
+				hooksecurefunc(PowaAurasOptions, "ReindexAura", function(_, idFrom, idTo)
+					-- Figure out the config tables for each.
+					local oldConfig = PowerAurasButtons_CharacterAurasDB
+					local newConfig = PowerAurasButtons_CharacterAurasDB
+					if(idFrom > 120) then oldConfig = PowerAurasButtons_AurasDB end
+					if(idTo > 120) then newConfig = PowerAurasButtons_AurasDB end
+					-- Move old to new.
+					if(oldConfig[idFrom]) then
+						-- Right, place these at the new location.
+						newConfig[idTo] = ModuleFrame:tcopy(oldConfig[idFrom])
+						-- Reindexing does NOT cause DeleteAura to fire.
+						wipe(oldConfig[idFrom])
+						-- Add this to the table of reindexed auras.
+						tinsert(ReindexedAuras, idTo)
+					end
+					-- Button update.
+					if(CoreFrame:IsModuleEnabled("Auras")) then Modules.Auras:ResetAuras() end
+				end)
+			end
+			ActionEditorBase:SetParent(PowaBarConfigFrame)
+			ActionEditorBase:SetPoint("TOPLEFT", PowaBarConfigFrame, "TOPRIGHT", 0, 0)
+			ActionEditorBase.Button:SetParent(PowaBarConfigFrame)
+			ActionEditorBase.Button:SetPoint("RIGHT", PowaCloseButton, "LEFT", 5, 0)
+			ActionEditorBase.Button:Show()
+			frame:UnregisterEvent("ADDON_LOADED")
+		end
+	end)
 	-- Make the editor frame.
-	ActionEditorBase = CreateFrame("Frame", nil, PowaBarConfigFrame--[[, "TranslucentFrameTemplate"]])
-	ActionEditorBase:SetPoint("TOPLEFT", PowaBarConfigFrame, "TOPRIGHT", 0, 0)
+	ActionEditorBase = CreateFrame("Frame", nil, UIParent--[[, "TranslucentFrameTemplate"]])
+	ActionEditorBase:SetPoint("TOPLEFT", UIParent, "TOPRIGHT", 0, 0)
 	ActionEditorBase:SetHeight(462)
 	ActionEditorBase:SetWidth(400)
 	ActionEditorBase:EnableMouse(true)
@@ -287,8 +382,9 @@ function ModuleFrame:CreateActionEditor()
 	ActionEditorBase:SetBackdropBorderColor(0.9, 1.0, 0.95)
 	ActionEditorBase:Hide()
 	-- Make the button.
-	ActionEditorBase.Button = CreateFrame("Button", nil, PowaBarConfigFrame, "OptionsButtonTemplate")
-	ActionEditorBase.Button:SetPoint("RIGHT", PowaCloseButton, "LEFT", 5, 0)
+	ActionEditorBase.Button = CreateFrame("Button", nil, UIParent, "OptionsButtonTemplate")
+	ActionEditorBase.Button:SetPoint("RIGHT", UIParent, "LEFT", 5, 0)
+	ActionEditorBase.Button:Hide()
 	ActionEditorBase.Button:SetText(L["Buttons"])
 	-- Style it.
 	ActionEditorBase.Button:SetHeight(20)
@@ -966,88 +1062,6 @@ function ModuleFrame:OnInitialize()
 	CoreFrame:FireModuleEvent("OnCreateInterfaceOptionsFrame", nil)	
 	-- Listen to the OnModuleLoaded event.
 	CoreFrame:RegisterModuleEventListener("OnModuleLoaded", ModuleFrame)
-	-- This function runs when the PA options pane opens.
-	local script = function()
-		-- Update the aura if it's valid and show the config frame if it's not up.
-		if(PowaAurasOptions.Auras[PowaAurasOptions.CurrentAuraId] and PowaBarConfigFrame:IsShown()) then
-			-- Update aura.
-			ModuleFrame:UpdateSelectedAura(PowaAurasOptions.CurrentAuraId)
-		else
-			-- Hide if it's not valid or not open.
-			--ActionEditorBase:Hide()
-		end
-	end
-	-- Add needed hooks.
-	if PowaBarConfigFrame then
-		PowaBarConfigFrame:HookScript("OnShow", script)
-		PowaBarConfigFrame:HookScript("OnHide", script)
-	end
-	if PowaAurasOptions.InitPage then
-		hooksecurefunc(PowaAurasOptions, "InitPage", script)
-	end
-	if PowaAurasOptions.UpdateMainOption then
-		hooksecurefunc(PowaAurasOptions, "UpdateMainOption", script)
-	end
-	-- Also hook copying/moving. We can move aura sets like that.
-	if PowaAurasOptions.DoCopyEffect then
-		hooksecurefunc(PowaAurasOptions, "DoCopyEffect", function(_, idFrom, idTo, isMove)
-			-- Figure out the config tables for each.
-			local oldConfig = PowerAurasButtons_CharacterAurasDB
-			local newConfig = PowerAurasButtons_CharacterAurasDB
-			if(idFrom > 120) then oldConfig = PowerAurasButtons_AurasDB end
-			if(idTo > 120) then newConfig = PowerAurasButtons_AurasDB end
-			-- See if we had any auras in these spots.
-			if(oldConfig[idFrom]) then
-				-- Right, place these at the new location.
-				newConfig[idTo] = ModuleFrame:tcopy(oldConfig[idFrom])
-				-- Was it a move?
-				if(isMove) then
-					-- Remove the old config.
-					wipe(oldConfig[idFrom])
-				end
-			end
-			-- Button update.
-			if(CoreFrame:IsModuleEnabled("Auras")) then Modules.Auras:ResetAuras() end
-		end)
-	end
-	-- And aura deleting (we would hook DeleteAura but it messes up with moving effects).
-	if PowaAurasOptions.OptionDeleteEffect then
-		hooksecurefunc(PowaAurasOptions, "OptionDeleteEffect", function(_, auraID)
-			-- Determine the config table this one belonged to.
-			local config = PowerAurasButtons_CharacterAurasDB
-			if(auraID > 120) then config = PowerAurasButtons_AurasDB end
-			-- Did it exist?
-			if(config[auraID] and not tContains(ReindexedAuras, auraID)) then
-				-- Remove it.
-				wipe(config[auraID])
-			end
-			-- Clear the reindex table.
-			wipe(ReindexedAuras)
-			-- Button update.
-			if(CoreFrame:IsModuleEnabled("Auras")) then Modules.Auras:ResetAuras() end
-		end)
-	end
-	-- If you delete an aura, it'll cause a re-indexing of ones after (delete #1 and #2 moves).
-	if PowaAurasOptions.ReindexAura then
-		hooksecurefunc(PowaAurasOptions, "ReindexAura", function(_, idFrom, idTo)
-			-- Figure out the config tables for each.
-			local oldConfig = PowerAurasButtons_CharacterAurasDB
-			local newConfig = PowerAurasButtons_CharacterAurasDB
-			if(idFrom > 120) then oldConfig = PowerAurasButtons_AurasDB end
-			if(idTo > 120) then newConfig = PowerAurasButtons_AurasDB end
-			-- Move old to new.
-			if(oldConfig[idFrom]) then
-				-- Right, place these at the new location.
-				newConfig[idTo] = ModuleFrame:tcopy(oldConfig[idFrom])
-				-- Reindexing does NOT cause DeleteAura to fire.
-				wipe(oldConfig[idFrom])
-				-- Add this to the table of reindexed auras.
-				tinsert(ReindexedAuras, idTo)
-			end
-			-- Button update.
-			if(CoreFrame:IsModuleEnabled("Auras")) then Modules.Auras:ResetAuras() end
-		end)
-	end
 	-- Done.
 	return true
 end
